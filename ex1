@@ -1,7 +1,7 @@
 from docx import Document
+from PyPDF2 import PdfWriter
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from PyPDF2 import PdfWriter
 
 def extract_track_changes(docx_file):
     document = Document(docx_file)
@@ -9,7 +9,7 @@ def extract_track_changes(docx_file):
 
     for i, paragraph in enumerate(document.paragraphs):
         for run in paragraph.runs:
-            if run.revision:
+            if run.element.rPr.rStyle and 'TrackChanges' in run.element.rPr.rStyle.val:
                 pages_with_changes.append(i + 1)
                 break  # Only need to add the page once
 
