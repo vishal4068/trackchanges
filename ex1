@@ -9,7 +9,7 @@ def extract_track_changes(docx_file):
 
     for i, paragraph in enumerate(document.paragraphs):
         for run in paragraph.runs:
-            if run.element.rPr.rStyle and 'TrackChanges' in run.element.rPr.rStyle.val:
+            if run.revision:
                 pages_with_changes.append(i + 1)
                 break  # Only need to add the page once
 
