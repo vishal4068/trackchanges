@@ -19,7 +19,7 @@ def create_pdf_from_pages(docx_file_path, pages_to_extract, output_pdf_path):
 
     doc = docx.Document(docx_file_path)
     for page_num in pages_to_extract:
-        c.drawString(100, 700, f"Page {page_num}")
+        c.drawString(100, 700, f"Page {page_num}")  # Adjust coordinates here
         c.showPage()
 
     c.save()
@@ -29,6 +29,8 @@ if __name__ == "__main__":
     output_pdf_path = "path/to/output.pdf"
 
     pages_with_changes = extract_pages_with_track_changes(input_docx_path)
+    print(f"Pages with track changes: {pages_with_changes}")  # Debugging print
+
     create_pdf_from_pages(input_docx_path, pages_with_changes, output_pdf_path)
 
     print(f"Extracted track change pages saved to {output_pdf_path}")
