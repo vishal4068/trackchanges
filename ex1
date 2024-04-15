@@ -6,9 +6,8 @@ def extract_pages_with_changes(docx_file):
     pages_with_changes = []
 
     for i, paragraph in enumerate(document.paragraphs):
-        if paragraph._element is not None and paragraph._element.rPr is not None:
-            if paragraph._element.rPr.rFonts is not None and paragraph._element.rPr.rFonts.dirty:
-                pages_with_changes.append(i + 1)
+        if any(run.revision for run in paragraph.runs):
+            pages_with_changes.append(i + 1)
 
     return pages_with_changes
 
