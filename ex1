@@ -29,8 +29,8 @@ if __name__ == "__main__":
     output_pdf_path = "path/to/output.pdf"
 
     pages_with_changes = extract_pages_with_track_changes(input_docx_path)
-    print(f"Pages with track changes: {pages_with_changes}")  # Debugging print
-
-    create_pdf_from_pages(input_docx_path, pages_with_changes, output_pdf_path)
-
-    print(f"Extracted track change pages saved to {output_pdf_path}")
+    if not pages_with_changes:
+        print("No track changes found in the DOCX file.")
+    else:
+        create_pdf_from_pages(input_docx_path, pages_with_changes, output_pdf_path)
+        print(f"Extracted track change pages saved to {output_pdf_path}")
