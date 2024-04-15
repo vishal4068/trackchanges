@@ -16,28 +16,18 @@ def extract_pages_with_changes(docx_file):
 
     return pages_with_changes
 
-def extract_pages(docx_file, output_prefix):
+def extract_and_merge_pdf_pages_with_changes(docx_file, output_pdf):
     pages_with_changes = extract_pages_with_changes(docx_file)
-
-    document = Document(docx_file)
-    for page_num in pages_with_changes:
-        extracted_doc = Document()
-        for i, paragraph in enumerate(document.paragraphs):
-            if i == page_num - 1:
-                extracted_doc.add_paragraph(paragraph.text)
-
-        output_file = f"{output_prefix}_page_{page_num}.docx"
-        extracted_doc.save(output_file)
-        convert_to_pdf(output_file)
-
-def convert_to_pdf(docx_file):
     pdf_writer = PdfWriter()
-    output_pdf = docx_file.replace('.docx', '.pdf')
-    pdf_writer.add_pages(open(docx_file, 'rb'))
+
     with open(output_pdf, 'wb') as output:
+        for page_num in pages_with_changes:
+            pdf_file = f"{output_pdf}_{page_num}.pdf"
+            pdf_writer.add_pages(open(pdf_file, 'rb'))
+
         pdf_writer.write(output)
 
 docx_file = "your_docx_file.docx"
-output_prefix = "output_with_changes"
+output_pdf = "output_with_changes.pdf"
 
-extract_pages(docx_file, output_prefix)
+extract_and_merge_pdf_pages_with_changes(docx_file, output_pdf)
