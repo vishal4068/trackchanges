@@ -1,13 +1,18 @@
 from docx import Document
 from PyPDF2 import PdfWriter
+import xml.etree.ElementTree as ET
 
 def extract_pages_with_changes(docx_file):
     document = Document(docx_file)
+    xml_content = document._element.xml
+    root = ET.fromstring(xml_content)
     pages_with_changes = []
 
-    for i, paragraph in enumerate(document.paragraphs):
-        if any(run.revision for run in paragraph.runs):
-            pages_with_changes.append(i + 1)
+    for i, paragraph in enumerate(root.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p")):
+        for run in paragraph.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r"):
+            if run.find("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ins") is not None or run.find("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}del") is not None:
+                pages_with_changes.append(i + 1)
+                break
 
     return pages_with_changes
 
