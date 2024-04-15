@@ -6,24 +6,26 @@ from PyPDF2 import PdfWriter
 def extract_track_changes(docx_file):
     document = Document(docx_file)
     pages_with_changes = []
-    
+
     for i, paragraph in enumerate(document.paragraphs):
-        if paragraph._element is not None and paragraph._element.rPr is not None:
-            if paragraph._element.rPr.rFonts is not None and paragraph._element.rPr.rFonts.dirty:
-                pages_with_changes.append(i + 1)
-                
+        if paragraph.runs:
+            for run in paragraph.runs:
+                if run.revisions:
+                    pages_with_changes.append(i + 1)
+                    break  # Only need to add the page once
+
     return pages_with_changes
 
 def create_pdf_with_changes(docx_file, output_pdf):
     pages_with_changes = extract_track_changes(docx_file)
     pdf_writer = PdfWriter()
-    
+
     for page_num in pages_with_changes:
-        c = canvas.Canvas(output_pdf)
+        c = canvas.Canvas(output_pdf, pagesize=letter)
         c.drawString(100, 750, f"Track Changes on Page {page_num}")
         c.save()
         pdf_writer.add_page(open(output_pdf, "rb"))
-    
+
     with open(output_pdf, "wb") as output:
         pdf_writer.write(output)
 
