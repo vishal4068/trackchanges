@@ -1,33 +1,45 @@
 from docx import Document
 from PyPDF2 import PdfWriter
-import xml.etree.ElementTree as ET
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 
 def extract_pages_with_changes(docx_file):
     document = Document(docx_file)
-    xml_content = document._element.xml
-    root = ET.fromstring(xml_content)
     pages_with_changes = []
 
-    for i, paragraph in enumerate(root.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p")):
-        for run in paragraph.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r"):
-            if run.find("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ins") is not None or run.find("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}del") is not None:
-                pages_with_changes.append(i + 1)
-                break
+    for i, paragraph in enumerate(document.paragraphs):
+        if any(run.revision for run in paragraph.runs):
+            pages_with_changes.append(i + 1)
 
     return pages_with_changes
 
-def extract_and_merge_pdf_pages_with_changes(docx_file, output_pdf):
+def create_pdf_with_changes(docx_file, output_pdf):
     pages_with_changes = extract_pages_with_changes(docx_file)
+
     pdf_writer = PdfWriter()
 
-    with open(output_pdf, 'wb') as output:
-        for page_num in pages_with_changes:
-            pdf_file = f"{output_pdf}_{page_num}.pdf"
-            pdf_writer.add_pages(open(pdf_file, 'rb'))
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    elements = []
 
+    document = Document(docx_file)
+    for page_num in pages_with_changes:
+        for i, paragraph in enumerate(document.paragraphs):
+            if i == page_num - 1:
+                text = paragraph.text
+                p = Paragraph(text, styles["Normal"])
+                elements.append(p)
+    
+    doc.build(elements)
+    pdf_writer.append(buffer)
+
+    with open(output_pdf, 'wb') as output:
         pdf_writer.write(output)
 
 docx_file = "your_docx_file.docx"
 output_pdf = "output_with_changes.pdf"
 
-extract_and_merge_pdf_pages_with_changes(docx_file, output_pdf)
+create_pdf_with_changes(docx_file, output_pdf)
