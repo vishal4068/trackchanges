@@ -1,36 +1,34 @@
 import os
 import docx
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+import zipfile
+from lxml import etree
 
-def extract_pages_with_track_changes(docx_file_path):
-    doc = docx.Document(docx_file_path)
-    pages_with_changes = []
+def add_track_changes_mode(docx_file_path):
+    # Load the Word document settings
+    zfile = zipfile.ZipFile(docx_file_path)
+    xmlcontent = zfile.read('word/settings.xml')
+    stgs_xml = etree.fromstring(xmlcontent)
 
-    for i, para in enumerate(doc.paragraphs):
-        if para._element.get('rsidRPr') or para._element.get('rsidR'):
-            # Check if the paragraph has track changes (rsidRPr or rsidR)
-            pages_with_changes.append(i + 1)  # Page numbers are 1-based
+    # Create the XML element for track changes
+    xml_to_insert = etree.fromstring('<w:trackRevisions xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>')
 
-    return pages_with_changes
+    # Insert the new XML into the settings
+    for node in stgs_xml.xpath('//w:settings', namespaces={'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}):
+        node.insert(2, xml_to_insert)
 
-def create_pdf_from_pages(docx_file_path, pages_to_extract, output_pdf_path):
-    c = canvas.Canvas(output_pdf_path, pagesize=letter)
+    # Convert the modified settings back to a string
+    stgs_new = etree.tostring(stgs_xml)
 
-    doc = docx.Document(docx_file_path)
-    for page_num in pages_to_extract:
-        c.drawString(100, 700, f"Page {page_num}")  # Adjust coordinates here
-        c.showPage()
+    # Update the Word document with the modified settings
+    with open(docx_file_path, 'rb') as original_doc:
+        original_content = original_doc.read()
+        modified_content = original_content.replace(xmlcontent, stgs_new)
 
-    c.save()
+    # Save the modified content back to the DOCX file
+    with open(docx_file_path, 'wb') as modified_doc:
+        modified_doc.write(modified_content)
 
 if __name__ == "__main__":
     input_docx_path = "path/to/your/input.docx"
-    output_pdf_path = "path/to/output.pdf"
-
-    pages_with_changes = extract_pages_with_track_changes(input_docx_path)
-    if not pages_with_changes:
-        print("No track changes found in the DOCX file.")
-    else:
-        create_pdf_from_pages(input_docx_path, pages_with_changes, output_pdf_path)
-        print(f"Extracted track change pages saved to {output_pdf_path}")
+    add_track_changes_mode(input_docx_path)
+    print(f"Track changes mode enabled in {input_docx_path}")
