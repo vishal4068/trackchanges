@@ -1,29 +1,18 @@
 from docx import Document
-from lxml import etree
+from PyPDF2 import PdfWriter
 
-def identify_pages_with_changes(docx_file):
+def identify_pages_with_changes(docx_file, track_changes_phrase):
     document = Document(docx_file)
-    xml_content = document._element.xml
-
-    # Parse the XML content
-    root = etree.fromstring(xml_content)
-
-    # Define namespaces
-    ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
-
-    # List to store pages with changes
     pages_with_changes = []
 
-    # Iterate through paragraphs
-    for i, paragraph in enumerate(root.xpath("//w:p", namespaces=ns)):
-        # Check if any run has revision
-        if any(paragraph.xpath(".//w:ins", namespaces=ns)) or any(paragraph.xpath(".//w:del", namespaces=ns)):
+    for i, paragraph in enumerate(document.paragraphs):
+        if track_changes_phrase in paragraph.text:
             pages_with_changes.append(i + 1)
 
     return pages_with_changes
 
-def extract_pages_to_pdf(docx_file, output_prefix):
-    pages_with_changes = identify_pages_with_changes(docx_file)
+def extract_pages_to_pdf(docx_file, output_prefix, track_changes_phrase):
+    pages_with_changes = identify_pages_with_changes(docx_file, track_changes_phrase)
 
     document = Document(docx_file)
     pdf_writer = PdfWriter()
@@ -43,5 +32,6 @@ def extract_pages_to_pdf(docx_file, output_prefix):
 
 docx_file = "your_docx_file.docx"
 output_prefix = "output_with_changes"
+track_changes_phrase = "Change line: outside border"
 
-extract_pages_to_pdf(docx_file, output_prefix)
+extract_pages_to_pdf(docx_file, output_prefix, track_changes_phrase)
