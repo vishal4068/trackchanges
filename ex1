@@ -1,27 +1,62 @@
 from docx import Document
-from lxml import etree
+from docx.shared import Pt
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from PyPDF2 import PdfWriter
 
-def identify_pages_with_changes(docx_file):
+def get_page_number(paragraph):
+    """
+    Get the page number of a paragraph.
+    """
+    p_element = paragraph._element
+    page_number = 0
+    
+    for element in p_element.iter():
+        if element.tag.endswith('sectPr'):
+            for prop in element.iter():
+                if prop.tag.endswith('pgNumType'):
+                    page_number += prop.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}start')
+                    break
+            break
+    
+    return page_number
+
+def extract_pages_with_changes(docx_file):
+    """
+    Identify pages with track changes in the DOCX file.
+    """
     document = Document(docx_file)
-    xml_content = document._element.xml
+    pages_with_changes = set()
 
-    # Parse the XML content
-    root = etree.fromstring(xml_content)
+    for paragraph in document.paragraphs:
+        if any(run.revision for run in paragraph.runs):
+            page_number = get_page_number(paragraph)
+            pages_with_changes.add(page_number)
 
-    # Define namespaces
-    ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    return sorted(pages_with_changes)
 
-    # List to store pages with changes
-    pages_with_changes = []
+def extract_pages_to_pdf(docx_file, output_prefix):
+    """
+    Extract pages with track changes to separate PDF files.
+    """
+    pages_with_changes = extract_pages_with_changes(docx_file)
+    
+    document = Document(docx_file)
+    pdf_writer = PdfWriter()
 
-    # Iterate through paragraphs
-    for i, paragraph in enumerate(root.xpath("//w:p", namespaces=ns)):
-        # Check if any run has revision
-        if any(paragraph.xpath(".//w:ins", namespaces=ns)) or any(paragraph.xpath(".//w:del", namespaces=ns)):
-            pages_with_changes.append(i + 1)
+    for page_num in pages_with_changes:
+        extracted_doc = Document()
+        for paragraph in document.paragraphs:
+            if get_page_number(paragraph) == page_num:
+                extracted_doc.add_paragraph(paragraph.text, style=None)
 
-    return pages_with_changes
+        output_pdf = f"{output_prefix}_page_{page_num}.pdf"
+        extracted_doc.save(output_pdf)
+        pdf_writer.add_pages(open(output_pdf, 'rb'))
+
+    with open(f"{output_prefix}_with_changes.pdf", 'wb') as output:
+        pdf_writer.write(output)
 
 docx_file = "your_docx_file.docx"
-pages_with_changes = identify_pages_with_changes(docx_file)
-print("Pages with track changes:", pages_with_changes)
+output_prefix = "output_with_changes"
+
+extract_pages_to_pdf(docx_file, output_prefix)
