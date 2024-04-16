@@ -1,34 +1,30 @@
-import os
-import docx
-import zipfile
-from lxml import etree
+from docx import Document
+from PyPDF2 import PdfWriter
+import re
 
-def add_track_changes_mode(docx_file_path):
-    # Load the Word document settings
-    zfile = zipfile.ZipFile(docx_file_path)
-    xmlcontent = zfile.read('word/settings.xml')
-    stgs_xml = etree.fromstring(xmlcontent)
+def extract_pages_with_changes(docx_file, slug_line):
+    document = Document(docx_file)
+    pages_with_changes = []
 
-    # Create the XML element for track changes
-    xml_to_insert = etree.fromstring('<w:trackRevisions xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>')
+    in_track_changes = False
+    for i, paragraph in enumerate(document.paragraphs):
+        text = paragraph.text.strip()
+        if text.startswith(slug_line):
+            in_track_changes = True
+        elif in_track_changes and not text.startswith(slug_line):
+            in_track_changes = False
+            pages_with_changes.append(i + 1)
 
-    # Insert the new XML into the settings
-    for node in stgs_xml.xpath('//w:settings', namespaces={'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}):
-        node.insert(2, xml_to_insert)
+    return pages_with_changes
 
-    # Convert the modified settings back to a string
-    stgs_new = etree.tostring(stgs_xml)
+def print_pages_to_pdf(docx_file, output_pdf, slug_line):
+    pages_with_changes = extract_pages_with_changes(docx_file, slug_line)
+    pages_to_print = ','.join(str(page) for page in pages_with_changes)
+    os.system(f'libreoffice --headless --invisible --convert-to pdf --outdir . --print-to-file {docx_file} {pages_to_print}')
+    os.rename(f'{docx_file}.pdf', output_pdf)
 
-    # Update the Word document with the modified settings
-    with open(docx_file_path, 'rb') as original_doc:
-        original_content = original_doc.read()
-        modified_content = original_content.replace(xmlcontent, stgs_new)
+docx_file = "your_docx_file.docx"
+output_pdf = "output_with_changes.pdf"
+slug_line = "Track Change Slug Line"
 
-    # Save the modified content back to the DOCX file
-    with open(docx_file_path, 'wb') as modified_doc:
-        modified_doc.write(modified_content)
-
-if __name__ == "__main__":
-    input_docx_path = "path/to/your/input.docx"
-    add_track_changes_mode(input_docx_path)
-    print(f"Track changes mode enabled in {input_docx_path}")
+print_pages_to_pdf(docx_file, output_pdf, slug_line)
