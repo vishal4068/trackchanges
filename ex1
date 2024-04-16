@@ -6,8 +6,7 @@ def identify_pages_with_changes(docx_file):
     pages_with_changes = []
 
     for i, paragraph in enumerate(document.paragraphs):
-        if paragraph.alignment == 1 and paragraph.paragraph_format.left_border.outside or \
-           paragraph.alignment == 2 and paragraph.paragraph_format.right_border.outside:
+        if paragraph.paragraph_format.borders.left.outside or paragraph.paragraph_format.borders.right.outside:
             pages_with_changes.append(i + 1)
 
     return pages_with_changes
