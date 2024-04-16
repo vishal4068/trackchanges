@@ -1,22 +1,22 @@
 from docx import Document
 from PyPDF2 import PdfWriter
 
-def identify_pages_with_changes(docx_file, track_changes_phrase):
+def identify_pages_with_changes(docx_file):
     document = Document(docx_file)
     pages_with_changes = []
 
     for i, paragraph in enumerate(document.paragraphs):
-        if track_changes_phrase in paragraph.text:
-            print(f"Track changes phrase found on page {i + 1}")
+        if paragraph.alignment == 1 and paragraph.paragraph_format.left_border.outside or \
+           paragraph.alignment == 2 and paragraph.paragraph_format.right_border.outside:
             pages_with_changes.append(i + 1)
 
     return pages_with_changes
 
-def extract_pages_to_pdf(docx_file, output_prefix, track_changes_phrase):
-    pages_with_changes = identify_pages_with_changes(docx_file, track_changes_phrase)
+def extract_pages_to_pdf(docx_file, output_prefix):
+    pages_with_changes = identify_pages_with_changes(docx_file)
 
     if not pages_with_changes:
-        print("No pages found with track changes.")
+        print("No pages found with outside borders.")
         return
 
     document = Document(docx_file)
@@ -38,6 +38,5 @@ def extract_pages_to_pdf(docx_file, output_prefix, track_changes_phrase):
 
 docx_file = "your_docx_file.docx"
 output_prefix = "output_with_changes"
-track_changes_phrase = "Change line: outside border"
 
-extract_pages_to_pdf(docx_file, output_prefix, track_changes_phrase)
+extract_pages_to_pdf(docx_file, output_prefix)
