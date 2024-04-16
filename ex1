@@ -1,6 +1,5 @@
-BBfrom docx import Document
+from docx import Document
 from lxml import etree
-from PyPDF2 import PdfWriter
 
 def identify_pages_with_changes(docx_file):
     document = Document(docx_file)
@@ -37,7 +36,7 @@ def extract_pages_to_pdf(docx_file, output_prefix):
 
         output_pdf = f"{output_prefix}_page_{page_num}.pdf"
         extracted_doc.save(output_pdf)
-        pdf_writer.add_pages(open(output_pdf, 'rb'))
+        pdf_writer.append(open(output_pdf, 'rb'))
 
     with open(f"{output_prefix}_with_changes.pdf", 'wb') as output:
         pdf_writer.write(output)
