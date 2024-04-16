@@ -1,35 +1,27 @@
 from docx import Document
-from PyPDF2 import PdfWriter
-import xml.etree.ElementTree as ET
+from lxml import etree
 
-def extract_pages_with_changes(docx_file, slug_line):
+def identify_pages_with_changes(docx_file):
     document = Document(docx_file)
     xml_content = document._element.xml
-    root = ET.fromstring(xml_content)
+
+    # Parse the XML content
+    root = etree.fromstring(xml_content)
+
+    # Define namespaces
+    ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+
+    # List to store pages with changes
     pages_with_changes = []
 
-    in_track_changes = False
-    for i, paragraph in enumerate(root.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p")):
-        for run in paragraph.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r"):
-            text = run.text.strip()
-            if text.endswith(slug_line):
-                in_track_changes = True
-                break
-        else:
-            if in_track_changes:
-                pages_with_changes.append(i + 1)
-                in_track_changes = False
+    # Iterate through paragraphs
+    for i, paragraph in enumerate(root.xpath("//w:p", namespaces=ns)):
+        # Check if any run has revision
+        if any(paragraph.xpath(".//w:ins", namespaces=ns)) or any(paragraph.xpath(".//w:del", namespaces=ns)):
+            pages_with_changes.append(i + 1)
 
     return pages_with_changes
 
-def print_pages_to_pdf(docx_file, output_pdf, slug_line):
-    pages_with_changes = extract_pages_with_changes(docx_file, slug_line)
-    pages_to_print = ','.join(str(page) for page in pages_with_changes)
-    os.system(f'libreoffice --headless --invisible --convert-to pdf --outdir . --print-to-file {docx_file} {pages_to_print}')
-    os.rename(f'{docx_file}.pdf', output_pdf)
-
 docx_file = "your_docx_file.docx"
-output_pdf = "output_with_changes.pdf"
-slug_line = "Track Change Slug Line"
-
-print_pages_to_pdf(docx_file, output_pdf, slug_line)
+pages_with_changes = identify_pages_with_changes(docx_file)
+print("Pages with track changes:", pages_with_changes)
