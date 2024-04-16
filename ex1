@@ -1,53 +1,37 @@
 from docx import Document
-from docx.shared import Pt
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from PyPDF2 import PdfWriter
-
-def get_page_number(paragraph):
-    """
-    Get the page number of a paragraph.
-    """
-    p_element = paragraph._element
-    page_number = 0
-    
-    for element in p_element.iter():
-        if element.tag.endswith('sectPr'):
-            for prop in element.iter():
-                if prop.tag.endswith('pgNumType'):
-                    page_number += prop.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}start')
-                    break
-            break
-    
-    return page_number
+import xml.etree.ElementTree as ET
 
 def extract_pages_with_changes(docx_file):
-    """
-    Identify pages with track changes in the DOCX file.
-    """
     document = Document(docx_file)
-    pages_with_changes = set()
+    xml_content = document._element.xml
+    root = ET.fromstring(xml_content)
+    pages_with_changes = []
 
-    for paragraph in document.paragraphs:
-        if any(run.revision for run in paragraph.runs):
-            page_number = get_page_number(paragraph)
-            pages_with_changes.add(page_number)
+    in_track_changes = False
+    for i, paragraph in enumerate(root.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p")):
+        for run in paragraph.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r"):
+            if run.find("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ins") is not None or run.find("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}del") is not None:
+                in_track_changes = True
+                break
+        else:
+            if in_track_changes:
+                pages_with_changes.append(i + 1)
+                in_track_changes = False
 
-    return sorted(pages_with_changes)
+    return pages_with_changes
 
 def extract_pages_to_pdf(docx_file, output_prefix):
-    """
-    Extract pages with track changes to separate PDF files.
-    """
     pages_with_changes = extract_pages_with_changes(docx_file)
-    
+
     document = Document(docx_file)
     pdf_writer = PdfWriter()
 
     for page_num in pages_with_changes:
         extracted_doc = Document()
-        for paragraph in document.paragraphs:
-            if get_page_number(paragraph) == page_num:
-                extracted_doc.add_paragraph(paragraph.text, style=None)
+        for i, paragraph in enumerate(document.paragraphs):
+            if i == page_num - 1:
+                extracted_doc.add_paragraph(paragraph.text)
 
         output_pdf = f"{output_prefix}_page_{page_num}.pdf"
         extracted_doc.save(output_pdf)
