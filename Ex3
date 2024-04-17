@@ -7,13 +7,17 @@ def find_red_text_pages(pdf_path):
             page = doc.load_page(page_num)
             text_instances = page.search_for('')
             for inst in text_instances:
-                # Get text object and its color
+                # Get text object
                 text_obj = page.get_text('text', clip=inst)
-                color = text_obj[1]
+                
+                # Check if text object exists
+                if text_obj:
+                    # Get color
+                    color = text_obj[1]
 
-                # Check if color is red (255, 0, 0)
-                if color == (1.0, 0.0, 0.0):  # (R, G, B) values normalized to range [0.0, 1.0]
-                    red_text_pages.append(page_num)
+                    # Check if color is red (255, 0, 0)
+                    if color == (1.0, 0.0, 0.0):  # (R, G, B) values normalized to range [0.0, 1.0]
+                        red_text_pages.append(page_num)
     return red_text_pages
 
 pdf_path = "document_with_tracked_changes.pdf"
