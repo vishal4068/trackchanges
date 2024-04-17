@@ -1,7 +1,7 @@
 import fitz  # PyMuPDF
 
 def extract_pages_with_red_strikethrough(pdf_path, output_path):
-    # Open the generated PDF
+    # Open the PDF
     pdf_document = fitz.open(pdf_path)
 
     # Create a new PDF
@@ -12,20 +12,32 @@ def extract_pages_with_red_strikethrough(pdf_path, output_path):
         page = pdf_document.load_page(page_number)
         
         # Check for red-colored text and strike-through formatting
+        red_text_found = False
+        strike_through_found = False
+        
         for text_instance in page.search_for("colorspace [1 0 0]", quads=True):
-            # Extract pages with red-colored text and strike-through formatting
-            new_pdf.insert_page(page_number)
-            new_pdf[-1].insert_page(-1, page)
-            break  # Break after finding one instance to avoid duplicate pages
+            red_text_found = True
+            break
+        
+        if not red_text_found:
+            for text_instance in page.search_for("text-decorator: strike-through", quads=True):
+                strike_through_found = True
+                break
+
+        # If red text or strike-through found, add the page to the new PDF
+        if red_text_found or strike_through_found:
+            new_pdf.insert_page(-1, page)
 
     # Save the new PDF if at least one page was extracted
     if new_pdf.page_count > 0:
         new_pdf.save(output_path)
     new_pdf.close()
 
-# Provide the path to the generated PDF from the .docx file
-generated_pdf_path = "generated_pdf.pdf"
+# Provide the path to the PDF file
+pdf_path = "your_file.pdf"
 
-# Extract pages with red-colored text and strike-through formatting to a new PDF
+# Specify the output path for the new PDF
 output_pdf_path = "extracted_pages.pdf"
-extract_pages_with_red_strikethrough(generated_pdf_path, output_pdf_path)
+
+# Extract pages with red-colored text or strike-through formatting to a new PDF
+extract_pages_with_red_strikethrough(pdf_path, output_pdf_path)
