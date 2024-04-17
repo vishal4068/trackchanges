@@ -1,6 +1,6 @@
 import fitz  # PyMuPDF
 
-def extract_pages_with_red_strikethrough(pdf_path, output_path):
+def extract_pages_with_red_text(pdf_path, output_path):
     # Open the PDF
     pdf_document = fitz.open(pdf_path)
 
@@ -11,21 +11,21 @@ def extract_pages_with_red_strikethrough(pdf_path, output_path):
     for page_number in range(pdf_document.page_count):
         page = pdf_document.load_page(page_number)
         
-        # Check for red-colored text and strike-through formatting
+        # Extract text and styling information
+        text = page.get_text("text")
+        text_instances = page.get_text("dict")["blocks"]
+        
+        # Check for red-colored text
         red_text_found = False
-        strike_through_found = False
-        
-        for text_instance in page.search_for("colorspace [1 0 0]", quads=True):
-            red_text_found = True
-            break
-        
-        if not red_text_found:
-            for text_instance in page.search_for("text-decorator: strike-through", quads=True):
-                strike_through_found = True
-                break
+        for block in text_instances:
+            for line in block["lines"]:
+                for span in line["spans"]:
+                    if span["colorspace"] == "DeviceRGB" and span["color"][0] == 1.0:
+                        red_text_found = True
+                        break
 
-        # If red text or strike-through found, add the page to the new PDF
-        if red_text_found or strike_through_found:
+        # If red text found, add the page to the new PDF
+        if red_text_found:
             new_pdf.insert_page(-1, page)
 
     # Save the new PDF if at least one page was extracted
@@ -33,7 +33,7 @@ def extract_pages_with_red_strikethrough(pdf_path, output_path):
         new_pdf.save(output_path)
         print("Output PDF saved successfully.")
     else:
-        print("No pages with red-colored text or strike-through formatting found.")
+        print("No pages with red-colored text found.")
 
     new_pdf.close()
 
@@ -43,5 +43,5 @@ pdf_path = "your_file.pdf"
 # Specify the output path for the new PDF
 output_pdf_path = "extracted_pages.pdf"
 
-# Extract pages with red-colored text or strike-through formatting to a new PDF
-extract_pages_with_red_strikethrough(pdf_path, output_pdf_path)
+# Extract pages with red-colored text to a new PDF
+extract_pages_with_red_text(pdf_path, output_pdf_path)
