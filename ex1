@@ -2,22 +2,31 @@ from docx import Document
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-def extract_print_markup(docx_file):
+def extract_pages_with_styles(docx_file):
     document = Document(docx_file)
-    markup_text = ""
+    pages_with_styles = []
+    current_page = ""
     for paragraph in document.paragraphs:
-        if paragraph.style.name == 'Balloon Text':
-            markup_text += paragraph.text + '\n'
-    return markup_text
+        if paragraph.text == "\n":
+            if current_page:
+                pages_with_styles.append(current_page.strip())
+                current_page = ""
+        else:
+            current_page += paragraph.text + '\n'
+    if current_page:
+        pages_with_styles.append(current_page.strip())
+    return pages_with_styles
 
-def create_pdf(markup_text, output_pdf):
+def create_pdf(page_text, output_pdf):
     c = canvas.Canvas(output_pdf, pagesize=letter)
     width, height = letter
-    c.drawString(50, height - 50, markup_text)
+    c.drawString(50, height - 50, page_text)
     c.save()
 
 if __name__ == "__main__":
     docx_file = "your_docx_file.docx"
-    output_pdf = "print_markup.pdf"
-    markup_text = extract_print_markup(docx_file)
-    create_pdf(markup_text, output_pdf)
+    extracted_pages = extract_pages_with_styles(docx_file)
+    
+    for i, page_text in enumerate(extracted_pages):
+        output_pdf = f"page_{i+1}_with_styles.pdf"
+        create_pdf(page_text, output_pdf)
