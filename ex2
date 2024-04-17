@@ -1,0 +1,16 @@
+import fitz
+
+def find_tracked_changes_pages(pdf_path):
+    tracked_pages = []
+    with fitz.open(pdf_path) as doc:
+        for page_num in range(len(doc)):
+            page = doc.load_page(page_num)
+            annotations = page.annots()
+            # Example condition: check for annotations or specific formatting
+            if annotations:
+                tracked_pages.append(page_num)
+    return tracked_pages
+
+pdf_path = "document_with_tracked_changes.pdf"
+tracked_pages = find_tracked_changes_pages(pdf_path)
+print("Tracked changes pages:", tracked_pages)
