@@ -1,6 +1,5 @@
+import fitz  # PyMuPDF
 from docx import Document
-from docx.shared import Inches
-from PyPDF2 import PdfReader, PdfWriter
 
 def convert_docx_to_pdf_with_track_changes(docx_file, pdf_file):
     document = Document(docx_file)
@@ -16,16 +15,17 @@ def convert_docx_to_pdf_with_track_changes(docx_file, pdf_file):
     document.save(pdf_file)
 
 def extract_pages_with_track_changes(pdf_file, output_pdf):
-    writer = PdfWriter()
-    reader = PdfReader(pdf_file)
-    for page_num in range(len(reader.pages)):
-        page = reader.pages[page_num]
-        # Check if page has any changes (e.g., red text)
-        if "/ColorSpace /DeviceCMYK" in str(page):
-            writer.add_page(page)
+    doc = fitz.open(pdf_file)
+    writer = fitz.open()
     
-    with open(output_pdf, 'wb') as outfile:
-        writer.write(outfile)
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        text = page.get_text()
+        # Check if page has any changes (e.g., red text)
+        if "/ColorSpace /DeviceCMYK" in text:
+            writer.insert_page(page_num, page)
+    
+    writer.save(output_pdf)
 
 if __name__ == "__main__":
     docx_file = "your_docx_file.docx"
