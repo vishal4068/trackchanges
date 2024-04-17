@@ -7,7 +7,7 @@ def extract_print_markup(docx_file):
     markup_text = ""
     for paragraph in document.paragraphs:
         for run in paragraph.runs:
-            if run.revision:
+            if run.element.rPr.rStyle and run.element.rPr.rStyle.val == 'BalloonText':
                 markup_text += run.text
     return markup_text
 
