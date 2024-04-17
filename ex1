@@ -1,31 +1,7 @@
-from docx import Document
-import pdfkit
+from docx2pdf import convert
 
-def convert_docx_to_pdf_with_track_changes(docx_file, pdf_file):
-    document = Document(docx_file)
+# Provide the path to your .doc file
+doc_file_path = "your_file.docx"
 
-    # Extract text with track changes applied
-    text_with_track_changes = ""
-    for paragraph in document.paragraphs:
-        for run in paragraph.runs:
-            if run.font.highlight_color:
-                # Include text with track changes applied
-                text_with_track_changes += run.text
-
-    # Save the text to a temporary HTML file
-    temp_html_file = "temp_track_changes.html"
-    with open(temp_html_file, "w", encoding="utf-8") as html_file:
-        html_file.write(text_with_track_changes)
-
-    # Convert the HTML file to PDF with track changes
-    options = {"enable-local-file-access": None}
-    pdfkit.from_file(temp_html_file, pdf_file, options=options)
-
-    # Remove the temporary HTML file
-    import os
-    os.remove(temp_html_file)
-
-if __name__ == "__main__":
-    docx_file = "your_docx_file.docx"
-    pdf_with_track_changes = "doc_with_track_changes.pdf"
-    convert_docx_to_pdf_with_track_changes(docx_file, pdf_with_track_changes)
+# Convert .doc to PDF
+convert(doc_file_path)
