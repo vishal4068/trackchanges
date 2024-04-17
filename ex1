@@ -1,41 +1,23 @@
 from docx import Document
-from PyPDF2 import PdfWriter
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 
-def identify_pages_with_changes(docx_file):
+def extract_print_markup(docx_file):
     document = Document(docx_file)
-    pages_with_changes = []
+    markup_text = ""
+    for paragraph in document.paragraphs:
+        if paragraph.style.name == 'Balloon Text':
+            markup_text += paragraph.text + '\n'
+    return markup_text
 
-    for i, paragraph in enumerate(document.paragraphs):
-        if paragraph.paragraph_format.borders.left.outside or paragraph.paragraph_format.borders.right.outside:
-            pages_with_changes.append(i + 1)
+def create_pdf(markup_text, output_pdf):
+    c = canvas.Canvas(output_pdf, pagesize=letter)
+    width, height = letter
+    c.drawString(50, height - 50, markup_text)
+    c.save()
 
-    return pages_with_changes
-
-def extract_pages_to_pdf(docx_file, output_prefix):
-    pages_with_changes = identify_pages_with_changes(docx_file)
-
-    if not pages_with_changes:
-        print("No pages found with outside borders.")
-        return
-
-    document = Document(docx_file)
-    pdf_writer = PdfWriter()
-
-    for page_num in pages_with_changes:
-        extracted_doc = Document()
-        for i, paragraph in enumerate(document.paragraphs):
-            if i == page_num - 1:
-                extracted_doc.add_paragraph(paragraph.text)
-
-        output_pdf = f"{output_prefix}_page_{page_num}.pdf"
-        extracted_doc.save(output_pdf)
-        pdf_writer.append(open(output_pdf, 'rb'))
-        print(f"Page {page_num} extracted.")
-
-    with open(f"{output_prefix}_with_changes.pdf", 'wb') as output:
-        pdf_writer.write(output)
-
-docx_file = "your_docx_file.docx"
-output_prefix = "output_with_changes"
-
-extract_pages_to_pdf(docx_file, output_prefix)
+if __name__ == "__main__":
+    docx_file = "your_docx_file.docx"
+    output_pdf = "print_markup.pdf"
+    markup_text = extract_print_markup(docx_file)
+    create_pdf(markup_text, output_pdf)
