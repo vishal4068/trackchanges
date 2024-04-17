@@ -1,40 +1,41 @@
-import fitz  # PyMuPDF
+import fitz
 
-def extract_pages_with_red_text(pdf_path, output_path):
-    # Open the PDF
-    pdf_document = fitz.open(pdf_path)
+def extract_text_with_formatting(pdf_path):
+    text_with_formatting = []
+    with fitz.open(pdf_path) as doc:
+        for page in doc:
+            blocks = page.get_text("blocks")
+            for b in blocks:
+                for l in b:
+                    text_with_formatting.append({
+                        "text": l[4],  # Extract text
+                        "font": l[0],  # Font information
+                        "size": l[1],  # Font size
+                        "color": l[2],  # Text color
+                        "style": l[3],  # Text style (e.g., bold, italic)
+                        "bbox": l[4],   # Bounding box
+                    })
+    return text_with_formatting
 
-    # Create a new PDF
-    new_pdf = fitz.open()
+def find_formatting_changes(old_pdf_path, new_pdf_path):
+    old_text = extract_text_with_formatting(old_pdf_path)
+    new_text = extract_text_with_formatting(new_pdf_path)
 
-    # Iterate through each page of the PDF
-    for page_number in range(pdf_document.page_count):
-        page = pdf_document.load_page(page_number)
-        
-        # Iterate through each text span on the page
-        for text_instance in page.get_text("dict")["blocks"]:
-            for span in text_instance["lines"]:
-                for element in span["spans"]:
-                    # Check if the text color is red
-                    color = element.get("colorspace", [0, 0, 0])  # Default to black if color information is not available
-                    if color[0] == 1.0 and color[1] == 0.0 and color[2] == 0.0:  # Red color
-                        new_pdf.insert_page(-1, page)
-                        break
+    # Compare formatting between old and new versions
+    changes = []
+    for old_line, new_line in zip(old_text, new_text):
+        if old_line["text"] != new_line["text"]:
+            # Text content has changed
+            changes.append({
+                "old_text": old_line["text"],
+                "new_text": new_line["text"],
+                "old_format": old_line,
+                "new_format": new_line,
+            })
 
-    # Save the new PDF if at least one page was extracted
-    if new_pdf.page_count > 0:
-        new_pdf.save(output_path)
-        print("Output PDF saved successfully.")
-    else:
-        print("No pages with red-colored text found.")
+    return changes
 
-    new_pdf.close()
-
-# Provide the path to the PDF file
-pdf_path = "your_file.pdf"
-
-# Specify the output path for the new PDF
-output_pdf_path = "extracted_pages.pdf"
-
-# Extract pages with red-colored text to a new PDF
-extract_pages_with_red_text(pdf_path, output_pdf_path)
+old_pdf_path = "old_document.pdf"
+new_pdf_path = "new_document.pdf"
+formatting_changes = find_formatting_changes(old_pdf_path, new_pdf_path)
+print(formatting_changes)
