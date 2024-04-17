@@ -31,6 +31,10 @@ def extract_pages_with_red_strikethrough(pdf_path, output_path):
     # Save the new PDF if at least one page was extracted
     if new_pdf.page_count > 0:
         new_pdf.save(output_path)
+        print("Output PDF saved successfully.")
+    else:
+        print("No pages with red-colored text or strike-through formatting found.")
+
     new_pdf.close()
 
 # Provide the path to the PDF file
