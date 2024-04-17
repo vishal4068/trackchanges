@@ -1,7 +1,28 @@
-from docx2pdf import convert
+from docx import Document
+from fpdf import FPDF
 
-# Provide the path to your .doc file
-doc_file_path = "your_file.docx"
+def docx_to_pdf(docx_path, pdf_path):
+    # Open the .docx file
+    doc = Document(docx_path)
+    
+    # Create PDF object
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Set font for PDF
+    pdf.set_font("Arial", size=12)
+    
+    # Loop through each paragraph in the .docx file
+    for paragraph in doc.paragraphs:
+        # Add the text to the PDF
+        pdf.cell(200, 10, txt=paragraph.text, ln=True)
+    
+    # Save the PDF
+    pdf.output(pdf_path)
 
-# Convert .doc to PDF
-convert(doc_file_path)
+# Provide the path to your .docx file and the desired path for the PDF output
+docx_file_path = "your_file.docx"
+pdf_file_path = "output_file.pdf"
+
+# Convert .docx to PDF
+docx_to_pdf(docx_file_path, pdf_file_path)
