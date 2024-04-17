@@ -1,5 +1,6 @@
 from docx2pdf import convert
 import fitz  # PyMuPDF
+import os
 
 def extract_pages_with_red_strikethrough(pdf_path, output_path):
     # Open the generated PDF
@@ -26,7 +27,7 @@ def extract_pages_with_red_strikethrough(pdf_path, output_path):
 docx_file_path = "your_file.docx"
 
 # Convert .docx to PDF
-generated_pdf_path = "generated_pdf.pdf"
+generated_pdf_path = os.path.splitext(docx_file_path)[0] + ".pdf"
 convert(docx_file_path)
 
 # Extract pages with red-colored text and strike-through formatting to a new PDF
