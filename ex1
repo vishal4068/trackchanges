@@ -12,13 +12,15 @@ def extract_pages_with_red_strikethrough(pdf_path, output_path):
         page = pdf_document.load_page(page_number)
         
         # Check for red-colored text and strike-through formatting
-        for text_instance in page.search_for("colorspace 1 0 0", quads=True):
+        for text_instance in page.search_for("colorspace [1 0 0]", quads=True):
             # Extract pages with red-colored text and strike-through formatting
             new_pdf.insert_page(page_number)
             new_pdf[-1].insert_page(-1, page)
+            break  # Break after finding one instance to avoid duplicate pages
 
-    # Save the new PDF
-    new_pdf.save(output_path)
+    # Save the new PDF if at least one page was extracted
+    if new_pdf.page_count > 0:
+        new_pdf.save(output_path)
     new_pdf.close()
 
 # Provide the path to the generated PDF from the .docx file
