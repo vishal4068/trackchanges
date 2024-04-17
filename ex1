@@ -1,36 +1,26 @@
-import fitz  # PyMuPDF
 from docx import Document
+from docx.shared import Pt
+from docx.enum.text import WD_COLOR_INDEX
 
 def convert_docx_to_pdf_with_track_changes(docx_file, pdf_file):
     document = Document(docx_file)
-    # Show track changes
+
+    # Set track changes visible
     for paragraph in document.paragraphs:
         for run in paragraph.runs:
-            run.font.color.rgb = None  # Reset font color to default
-            run.font.strike = None      # Remove strike-through
-            if run.element.rPr.rStyle and run.element.rPr.rStyle.val == 'BalloonText':
-                run.font.color.rgb = 'FF0000'  # Set font color to red
-                run.font.strike = True          # Apply strike-through
+            # Check for inserted or deleted text
+            if run.revision:
+                # Set the font color to red for inserted text
+                if run.revision.type == 1:
+                    run.font.color.rgb = (255, 0, 0)  # Red
+                # Apply strike-through for deleted text
+                elif run.revision.type == 2:
+                    run.font.strike = True
     
+    # Save the modified document as PDF
     document.save(pdf_file)
-
-def extract_pages_with_track_changes(pdf_file, output_pdf):
-    doc = fitz.open(pdf_file)
-    writer = fitz.open()
-    
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        text = page.get_text()
-        # Check if page has any changes (e.g., red text)
-        if "/ColorSpace /DeviceCMYK" in text:
-            writer.insert_page(page_num, page)
-    
-    writer.save(output_pdf)
 
 if __name__ == "__main__":
     docx_file = "your_docx_file.docx"
     pdf_with_track_changes = "doc_with_track_changes.pdf"
     convert_docx_to_pdf_with_track_changes(docx_file, pdf_with_track_changes)
-
-    output_pdf = "track_changes_pages.pdf"
-    extract_pages_with_track_changes(pdf_with_track_changes, output_pdf)
