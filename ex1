@@ -1,24 +1,29 @@
 from docx import Document
-from docx.shared import Pt
-from docx.enum.text import WD_COLOR_INDEX
+import pdfkit
 
 def convert_docx_to_pdf_with_track_changes(docx_file, pdf_file):
     document = Document(docx_file)
 
-    # Set track changes visible
+    # Extract text with track changes applied
+    text_with_track_changes = ""
     for paragraph in document.paragraphs:
         for run in paragraph.runs:
-            # Check for inserted or deleted text
-            if run.revision:
-                # Set the font color to red for inserted text
-                if run.revision.type == 1:
-                    run.font.color.rgb = (255, 0, 0)  # Red
-                # Apply strike-through for deleted text
-                elif run.revision.type == 2:
-                    run.font.strike = True
-    
-    # Save the modified document as PDF
-    document.save(pdf_file)
+            if run.font.highlight_color:
+                # Include text with track changes applied
+                text_with_track_changes += run.text
+
+    # Save the text to a temporary HTML file
+    temp_html_file = "temp_track_changes.html"
+    with open(temp_html_file, "w", encoding="utf-8") as html_file:
+        html_file.write(text_with_track_changes)
+
+    # Convert the HTML file to PDF with track changes
+    options = {"enable-local-file-access": None}
+    pdfkit.from_file(temp_html_file, pdf_file, options=options)
+
+    # Remove the temporary HTML file
+    import os
+    os.remove(temp_html_file)
 
 if __name__ == "__main__":
     docx_file = "your_docx_file.docx"
