@@ -12,7 +12,6 @@ def extract_pages_with_red_text(pdf_path, output_path):
         page = pdf_document.load_page(page_number)
         
         # Extract text and styling information
-        text = page.get_text("text")
         text_instances = page.get_text("dict")["blocks"]
         
         # Check for red-colored text
@@ -20,7 +19,8 @@ def extract_pages_with_red_text(pdf_path, output_path):
         for block in text_instances:
             for line in block["lines"]:
                 for span in line["spans"]:
-                    if span["colorspace"] == "DeviceRGB" and span["color"][0] == 1.0:
+                    color = span.get("color")
+                    if color and isinstance(color, list) and len(color) == 3 and color[0] == 1.0:
                         red_text_found = True
                         break
 
