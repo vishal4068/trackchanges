@@ -1,6 +1,6 @@
 from docx import Document
 from docx.shared import Inches
-from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2 import PdfReader, PdfWriter
 
 def convert_docx_to_pdf_with_track_changes(docx_file, pdf_file):
     document = Document(docx_file)
@@ -16,14 +16,13 @@ def convert_docx_to_pdf_with_track_changes(docx_file, pdf_file):
     document.save(pdf_file)
 
 def extract_pages_with_track_changes(pdf_file, output_pdf):
-    writer = PdfFileWriter()
-    with open(pdf_file, 'rb') as infile:
-        reader = PdfFileReader(infile)
-        for page_num in range(reader.numPages):
-            page = reader.getPage(page_num)
-            # Check if page has any changes (e.g., red text)
-            if "/ColorSpace /DeviceCMYK" in str(page):
-                writer.addPage(page)
+    writer = PdfWriter()
+    reader = PdfReader(pdf_file)
+    for page_num in range(len(reader.pages)):
+        page = reader.pages[page_num]
+        # Check if page has any changes (e.g., red text)
+        if "/ColorSpace /DeviceCMYK" in str(page):
+            writer.add_page(page)
     
     with open(output_pdf, 'wb') as outfile:
         writer.write(outfile)
