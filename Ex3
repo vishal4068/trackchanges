@@ -1,0 +1,21 @@
+import fitz
+
+def find_red_text_pages(pdf_path):
+    red_text_pages = []
+    with fitz.open(pdf_path) as doc:
+        for page_num in range(len(doc)):
+            page = doc.load_page(page_num)
+            text_instances = page.search_for('')
+            for inst in text_instances:
+                # Get text object and its color
+                text_obj = page.get_text('text', clip=inst)
+                color = text_obj[1]
+
+                # Check if color is red (255, 0, 0)
+                if color == (1.0, 0.0, 0.0):  # (R, G, B) values normalized to range [0.0, 1.0]
+                    red_text_pages.append(page_num)
+    return red_text_pages
+
+pdf_path = "document_with_tracked_changes.pdf"
+red_text_pages = find_red_text_pages(pdf_path)
+print("Pages with red-colored text:", red_text_pages)
