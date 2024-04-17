@@ -11,22 +11,15 @@ def extract_pages_with_red_text(pdf_path, output_path):
     for page_number in range(pdf_document.page_count):
         page = pdf_document.load_page(page_number)
         
-        # Extract text and styling information
-        text_instances = page.get_text("dict")["blocks"]
-        
-        # Check for red-colored text
-        red_text_found = False
-        for block in text_instances:
-            for line in block["lines"]:
-                for span in line["spans"]:
-                    color = span.get("color")
-                    if color and isinstance(color, list) and len(color) == 3 and color[0] == 1.0:
-                        red_text_found = True
+        # Iterate through each text span on the page
+        for text_instance in page.get_text("dict")["blocks"]:
+            for span in text_instance["lines"]:
+                for element in span["spans"]:
+                    # Check if the text color is red
+                    color = element.get("colorspace", [0, 0, 0])  # Default to black if color information is not available
+                    if color[0] == 1.0 and color[1] == 0.0 and color[2] == 0.0:  # Red color
+                        new_pdf.insert_page(-1, page)
                         break
-
-        # If red text found, add the page to the new PDF
-        if red_text_found:
-            new_pdf.insert_page(-1, page)
 
     # Save the new PDF if at least one page was extracted
     if new_pdf.page_count > 0:
