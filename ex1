@@ -1,28 +1,34 @@
-from docx import Document
-from fpdf import FPDF
+from docx2pdf import convert
+import fitz  # PyMuPDF
 
-def docx_to_pdf(docx_path, pdf_path):
-    # Open the .docx file
-    doc = Document(docx_path)
-    
-    # Create PDF object
-    pdf = FPDF()
-    pdf.add_page()
-    
-    # Set font for PDF
-    pdf.set_font("Arial", size=12)
-    
-    # Loop through each paragraph in the .docx file
-    for paragraph in doc.paragraphs:
-        # Add the text to the PDF
-        pdf.cell(200, 10, txt=paragraph.text, ln=True)
-    
-    # Save the PDF
-    pdf.output(pdf_path)
+def extract_pages_with_red_strikethrough(pdf_path, output_path):
+    # Open the generated PDF
+    pdf_document = fitz.open(pdf_path)
 
-# Provide the path to your .docx file and the desired path for the PDF output
+    # Create a new PDF
+    new_pdf = fitz.open()
+
+    # Iterate through each page of the PDF
+    for page_number in range(pdf_document.page_count):
+        page = pdf_document.load_page(page_number)
+        
+        # Check for red-colored text and strike-through formatting
+        for text_instance in page.search_for("colorspace 1 0 0", quads=True):
+            # Extract pages with red-colored text and strike-through formatting
+            new_pdf.insert_page(page_number)
+            new_pdf[-1].insert_page(-1, page)
+
+    # Save the new PDF
+    new_pdf.save(output_path)
+    new_pdf.close()
+
+# Provide the path to your .docx file
 docx_file_path = "your_file.docx"
-pdf_file_path = "output_file.pdf"
 
 # Convert .docx to PDF
-docx_to_pdf(docx_file_path, pdf_file_path)
+generated_pdf_path = "generated_pdf.pdf"
+convert(docx_file_path)
+
+# Extract pages with red-colored text and strike-through formatting to a new PDF
+output_pdf_path = "extracted_pages.pdf"
+extract_pages_with_red_strikethrough(generated_pdf_path, output_pdf_path)
