@@ -1,7 +1,3 @@
-6040977
-
-[13710392, 16711680, 6040977]
-
 import fitz
 
 def extract_text_with_color_and_strike_through(pdf_path):
@@ -23,7 +19,7 @@ def extract_text_with_color_and_strike_through(pdf_path):
 
         # Check if any text on the page satisfies the condition
         for text, color, strike_through in page_text_with_color_strike_through:
-            if color == (1, 0, 0) and strike_through:  # Condition: Red color with strike-through
+            if color == (1.0, 0, 0) and strike_through:  # Condition: Red color with strike-through
                 pages_to_extract.add(page_num)
 
     doc.close()
@@ -35,7 +31,7 @@ def extract_text_with_color_and_strike_through(pdf_path):
 def extract_pages_to_pdf(pdf_path, pages_to_extract):
     doc = fitz.open(pdf_path)
     extracted_doc = fitz.open()
-    
+
     for page_num in pages_to_extract:
         extracted_doc.insert_pdf(doc, from_page=page_num, to_page=page_num)
 
@@ -45,4 +41,3 @@ def extract_pages_to_pdf(pdf_path, pages_to_extract):
 # Example usage:
 pdf_path = 'example.pdf'
 extract_text_with_color_and_strike_through(pdf_path)
-
