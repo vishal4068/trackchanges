@@ -1,3 +1,48 @@
 6040977
 
 [13710392, 16711680, 6040977]
+
+import fitz
+
+def extract_text_with_color_and_strike_through(pdf_path):
+    doc = fitz.open(pdf_path)
+    pages_to_extract = set()
+
+    for page_num in range(doc.page_count):
+        page = doc.load_page(page_num)
+        blocks = page.get_text("dict")["blocks"]
+        page_text_with_color_strike_through = []
+
+        for b in blocks:
+            for l in b["lines"]:
+                for s in l["spans"]:
+                    text = s["text"]
+                    color = s.get("color", None)
+                    strike_through = s["flags"] & 8 != 0  # Check if the strike-through flag is set
+                    page_text_with_color_strike_through.append((text, color, strike_through))
+
+        # Check if any text on the page satisfies the condition
+        for text, color, strike_through in page_text_with_color_strike_through:
+            if color == (1, 0, 0) and strike_through:  # Condition: Red color with strike-through
+                pages_to_extract.add(page_num)
+
+    doc.close()
+
+    # Extract pages that satisfy the condition to a separate PDF
+    if pages_to_extract:
+        extract_pages_to_pdf(pdf_path, pages_to_extract)
+
+def extract_pages_to_pdf(pdf_path, pages_to_extract):
+    doc = fitz.open(pdf_path)
+    extracted_doc = fitz.open()
+    
+    for page_num in pages_to_extract:
+        extracted_doc.insert_pdf(doc, from_page=page_num, to_page=page_num)
+
+    extracted_doc.save("extracted_pages.pdf")
+    extracted_doc.close()
+
+# Example usage:
+pdf_path = 'example.pdf'
+extract_text_with_color_and_strike_through(pdf_path)
+
