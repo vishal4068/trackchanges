@@ -1,0 +1,16 @@
+from docx import Document
+
+def count_pages_with_track_changes(docx_file):
+    doc = Document(docx_file)
+    pages_with_changes = set()
+
+    for paragraph in doc.paragraphs:
+        if paragraph.revisions:
+            page_num = doc.part.body.index(paragraph._element) + 1
+            pages_with_changes.add(page_num)
+
+    return len(pages_with_changes)
+
+# Replace 'your_docx_file.docx' with the path to your DOCX file
+num_pages_with_changes = count_pages_with_track_changes('your_docx_file.docx')
+print("Number of pages with track changes:", num_pages_with_changes)
