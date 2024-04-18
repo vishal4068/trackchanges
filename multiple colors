@@ -1,0 +1,30 @@
+import fitz
+
+def extract_text_with_multiple_colors(pdf_path, target_colors):
+    doc = fitz.open(pdf_path)
+    pages_with_color = {}
+
+    for page_num in range(doc.page_count):
+        page = doc.load_page(page_num)
+        blocks = page.get_text("dict")["blocks"]
+        
+        for b in blocks:
+            for l in b["lines"]:
+                for s in l["spans"]:
+                    if s["color"] in target_colors:
+                        text = s["text"]
+                        if page_num not in pages_with_color:
+                            pages_with_color[page_num] = []
+                        pages_with_color[page_num].append(text)
+
+    doc.close()
+    return pages_with_color
+
+# Example usage:
+pdf_path = 'ex3_split.pdf'
+target_colors = [13710392, 16711680, 6040977]  # List of colors
+pages_with_text_in_colors = extract_text_with_multiple_colors(pdf_path, target_colors)
+for page, texts in pages_with_text_in_colors.items():
+    print(f"Page: {page}")
+    for text in texts:
+        print(f"Text: {text}")
