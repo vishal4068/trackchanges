@@ -1,16 +1,32 @@
 import fitz
 
-def find_tracked_changes_pages(pdf_path):
-    tracked_pages = []
-    with fitz.open(pdf_path) as doc:
-        for page_num in range(len(doc)):
-            page = doc.load_page(page_num)
-            annotations = page.annots()
-            # Example condition: check for annotations or specific formatting
-            if annotations:
-                tracked_pages.append(page_num)
-    return tracked_pages
+def extract_text_with_color(pdf_path, target_color):
+    doc = fitz.open(pdf_path)
+    pages_with_color = {}
 
-pdf_path = "document_with_tracked_changes.pdf"
-tracked_pages = find_tracked_changes_pages(pdf_path)
-print("Tracked changes pages:", tracked_pages)
+    for page_num in range(doc.page_count):
+        page = doc.load_page(page_num)
+        blocks = page.get_text("dict")["blocks"]
+        found_color_on_page = False
+        
+        for b in blocks:
+            for l in b["lines"]:
+                for s in l["spans"]:
+                    if s["color"] == target_color:
+                        text = s["text"]
+                        if page_num not in pages_with_color:
+                            pages_with_color[page_num] = []
+                        pages_with_color[page_num].append(text)
+                        found_color_on_page = True
+
+    doc.close()
+    return pages_with_color
+
+# Example usage:
+pdf_path = 'ex.pdf'
+target_color = 13710392  
+pages_with_text_in_color = extract_text_with_color(pdf_path, target_color)
+for page, texts in pages_with_text_in_color.items():
+    print(f"Page: {page}")
+    for text in texts:
+        print(f"Text: {text}")
