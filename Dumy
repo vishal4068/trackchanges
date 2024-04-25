@@ -1,24 +1,17 @@
 from docx import Document
-from lxml import etree
 
-def docx_to_xml(docx_file, xml_file):
-    # Read the DOCX file
+def docx_to_xml_with_track_changes(docx_file, xml_file):
+    # Read the DOCX file with track changes
     doc = Document(docx_file)
 
-    # Create a root element for the XML tree
-    root = etree.Element("document")
+    # Get the XML representation of the document with track changes
+    xml_content = doc._element.xml
 
-    # Iterate through paragraphs and add them to the XML tree
-    for paragraph in doc.paragraphs:
-        p = etree.SubElement(root, "paragraph")
-        p.text = paragraph.text
-
-    # Serialize the XML tree to a file
-    tree = etree.ElementTree(root)
-    with open(xml_file, "wb") as f:
-        tree.write(f, pretty_print=True, xml_declaration=True, encoding="utf-8")
+    # Write the XML content to a file
+    with open(xml_file, "w", encoding="utf-8") as f:
+        f.write(xml_content)
 
 # Example usage
 docx_file = "example.docx"
-xml_file = "output.xml"
-docx_to_xml(docx_file, xml_file)
+xml_file = "output_with_track_changes.xml"
+docx_to_xml_with_track_changes(docx_file, xml_file)
