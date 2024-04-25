@@ -1,0 +1,47 @@
+from docx import Document
+from lxml import etree
+from io import BytesIO
+from fpdf import FPDF
+
+def extract_pages_with_track_changes(docx_file, output_folder):
+    # Read the DOCX file
+    doc = Document(docx_file)
+
+    # Convert DOCX to XML
+    xml_content = doc._element.xml
+    xml_root = etree.fromstring(xml_content)
+
+    # Find pages with track changes
+    pages_with_changes = set()
+    for paragraph in xml_root.iter("w:p"):
+        for run in paragraph.iter("w:r"):
+            for revision in run.iter("w:ins", "w:del"):
+                page_number = revision.xpath("ancestor::w:pPr/w:pPrChange/w:moveToFollowing/w:bookmarkStart/@w:id", namespaces=revision.nsmap)
+                if page_number:
+                    pages_with_changes.add(int(page_number[0]))
+
+    # Create PDFs for pages with track changes
+    for page_num in pages_with_changes:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        
+        # Extract content of the page
+        extracted_content = ""
+        for paragraph in xml_root.iter("w:p"):
+            pg_num = paragraph.xpath("w:pPr/w:pPrChange/w:moveToFollowing/w:bookmarkStart/@w:id", namespaces=paragraph.nsmap)
+            if pg_num and int(pg_num[0]) == page_num:
+                text = paragraph.xpath("string(.)", namespaces=paragraph.nsmap)
+                extracted_content += text + "\n"
+
+        # Add content to PDF
+        pdf.multi_cell(0, 10, extracted_content)
+
+        # Save PDF
+        pdf_file = f"{output_folder}/page_{page_num}_with_changes.pdf"
+        pdf.output(pdf_file)
+
+# Example usage
+docx_file = "example.docx"
+output_folder = "output_folder"
+extract_pages_with_track_changes(docx_file, output_folder)
