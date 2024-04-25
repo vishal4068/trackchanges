@@ -5,11 +5,13 @@ from openpyxl.utils import get_column_letter
 def extract_track_changes(docx_file):
     document = Document(docx_file)
     changes = []
-    for revision in document.revisions:
-        if isinstance(revision, str):
-            changes.append((revision, -1))  # -1 indicates page number is not available
-        else:
-            changes.append((revision.text, revision.paragraphs[0].paragraph_format.page_number))
+    for paragraph in document.paragraphs:
+        original_text = paragraph.text
+        for run in paragraph.runs:
+            run.text = run.text.strip()  # Remove any leading/trailing whitespace
+        modified_text = paragraph.text
+        if original_text != modified_text:
+            changes.append((modified_text, paragraph.paragraph_format.page_number))
     return changes
 
 def save_to_excel(changes, excel_file):
