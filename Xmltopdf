@@ -1,8 +1,9 @@
+import os
 from docx import Document
 from lxml import etree
 from fpdf import FPDF
 
-def extract_pages_with_track_changes(docx_file, output_folder):
+def extract_pages_with_track_changes(docx_file):
     # Read the DOCX file
     doc = Document(docx_file)
 
@@ -35,8 +36,9 @@ def extract_pages_with_track_changes(docx_file, output_folder):
         # Add content to PDF
         pdf.multi_cell(0, 10, extracted_content)
 
-        # Save PDF
-        pdf_file = f"{output_folder}/page_{page_num}_with_changes.pdf"
+        # Save PDF in the same folder as the DOCX file
+        file_name = f"page_{page_num}_with_changes.pdf"
+        pdf_file = os.path.join(os.path.dirname(docx_file), file_name)
         try:
             pdf.output(pdf_file)
             print(f"PDF generated for page {page_num} with track changes.")
@@ -47,8 +49,7 @@ def extract_pages_with_track_changes(docx_file, output_folder):
 
 # Test the function
 docx_file = "example.docx"
-output_folder = "output_folder"
 
 print("Extracting pages with track changes...")
-extract_pages_with_track_changes(docx_file, output_folder)
+extract_pages_with_track_changes(docx_file)
 print("Extraction completed.")
