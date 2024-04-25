@@ -1,17 +1,24 @@
-from docx2python import docx2python
+from docx import Document
+from lxml import etree
 
-def convert_docx_to_xml_with_revisions(docx_file, xml_file):
-    # Convert docx to python dictionary
-    docx = docx2python(docx_file)
-    
-    # Extract XML representation with revisions
-    xml_with_revisions = docx.xml_with_revisions
-    
-    # Write XML to file
-    with open(xml_file, 'w', encoding='utf-8') as f:
-        f.write(xml_with_revisions)
+def docx_to_xml(docx_file, xml_file):
+    # Read the DOCX file
+    doc = Document(docx_file)
+
+    # Create a root element for the XML tree
+    root = etree.Element("document")
+
+    # Iterate through paragraphs and add them to the XML tree
+    for paragraph in doc.paragraphs:
+        p = etree.SubElement(root, "paragraph")
+        p.text = paragraph.text
+
+    # Serialize the XML tree to a file
+    tree = etree.ElementTree(root)
+    with open(xml_file, "wb") as f:
+        tree.write(f, pretty_print=True, xml_declaration=True, encoding="utf-8")
 
 # Example usage
 docx_file = "example.docx"
-xml_file = "document_with_revisions.xml"
-convert_docx_to_xml_with_revisions(docx_file, xml_file)
+xml_file = "output.xml"
+docx_to_xml(docx_file, xml_file)
