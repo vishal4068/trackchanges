@@ -1,15 +1,11 @@
 import os
-from docx import Document
 from lxml import etree
 from fpdf import FPDF
 
-def extract_page_with_track_changes(docx_file, output_folder):
-    # Read the DOCX file
-    doc = Document(docx_file)
-
-    # Convert DOCX to XML
-    xml_content = doc._element.xml
-    xml_root = etree.fromstring(xml_content)
+def extract_page_with_track_changes(xml_file, output_folder):
+    # Parse the XML file
+    xml_tree = etree.parse(xml_file)
+    xml_root = xml_tree.getroot()
 
     # Find pages with track changes
     pages_with_changes = set()
@@ -46,9 +42,9 @@ def extract_page_with_track_changes(docx_file, output_folder):
         print("No pages with track changes found.")
 
 # Test the function
-docx_file = "example.docx"
-output_folder = os.path.dirname(docx_file)
+xml_file = "example.xml"
+output_folder = os.path.dirname(xml_file)
 
 print("Extracting page with track changes...")
-extract_page_with_track_changes(docx_file, output_folder)
+extract_page_with_track_changes(xml_file, output_folder)
 print("Extraction completed.")
