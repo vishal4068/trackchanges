@@ -1,17 +1,30 @@
-from docx import Document
-
-def docx_to_xml_with_track_changes(docx_file, xml_file):
-    # Read the DOCX file with track changes
-    doc = Document(docx_file)
-
-    # Get the XML representation of the document with track changes
-    xml_content = doc._element.xml
-
-    # Write the XML content to a file
-    with open(xml_file, "w", encoding="utf-8") as f:
-        f.write(xml_content)
-
-# Example usage
-docx_file = "example.docx"
-xml_file = "output_with_track_changes.xml"
-docx_to_xml_with_track_changes(docx_file, xml_file)
+Sub ExportTrackChangesAsPDF()
+    Dim rng As Range
+    Dim newDoc As Document
+    Dim pageNumber As Integer
+    Dim pageRange As Range
+    
+    ' Loop through each revision
+    For Each rev In ActiveDocument.Revisions
+        ' Get the page number of the revision
+        Set rng = rev.Range
+        pageNumber = rng.Information(wdActiveEndPageNumber)
+        
+        ' Create a new document for each page if it doesn't exist already
+        If Documents.Count <= pageNumber Then
+            Set newDoc = Documents.Add
+        Else
+            Set newDoc = Documents(pageNumber)
+        End If
+        
+        ' Copy the revision to the new document
+        rng.Copy
+        newDoc.Range.Paste
+        
+        ' Export the new document as PDF
+        newDoc.ExportAsFixedFormat OutputFileName:="Page " & pageNumber & " Track Changes.pdf", ExportFormat:=wdExportFormatPDF
+        
+        ' Clear the new document for the next iteration
+        newDoc.Content.Delete
+    Next rev
+End Sub
