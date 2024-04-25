@@ -45,7 +45,10 @@ def extract_pages_with_track_changes(docx_file, output_folder):
         else:
             print(f"PDF saved successfully as: {pdf_file}")
 
-# Example usage
+# Test the function
 docx_file = "example.docx"
 output_folder = "output_folder"
+
+print("Extracting pages with track changes...")
 extract_pages_with_track_changes(docx_file, output_folder)
+print("Extraction completed.")
