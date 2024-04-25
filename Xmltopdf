@@ -1,55 +1,10 @@
-import os
-from docx import Document
-from lxml import etree
 from fpdf import FPDF
 
-def extract_pages_with_track_changes(docx_file):
-    # Read the DOCX file
-    doc = Document(docx_file)
+def generate_pdf():
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="Hello, World!", ln=True)
+    pdf.output("output.pdf")
 
-    # Convert DOCX to XML
-    xml_content = doc._element.xml
-    xml_root = etree.fromstring(xml_content)
-
-    # Find pages with track changes
-    pages_with_changes = set()
-    for paragraph in xml_root.iter("{*}p"):
-        for revision in paragraph.findall(".//{*}ins"):
-            page_number = revision.get("{*}id")
-            if page_number:
-                pages_with_changes.add(int(page_number))
-
-    # Create PDFs for pages with track changes
-    for page_num in pages_with_changes:
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        
-        # Extract content of the page
-        extracted_content = ""
-        for paragraph in xml_root.iter("{*}p"):
-            pg_num = paragraph.find(".//{*}ins[@w:id='{}']".format(page_num))
-            if pg_num is not None:
-                text = "".join([run.text for run in pg_num.findall(".//{*}t")])
-                extracted_content += text + "\n"
-
-        # Add content to PDF
-        pdf.multi_cell(0, 10, extracted_content)
-
-        # Save PDF in the same folder as the DOCX file
-        file_name = f"page_{page_num}_with_changes.pdf"
-        pdf_file = os.path.join(os.path.dirname(docx_file), file_name)
-        try:
-            pdf.output(pdf_file)
-            print(f"PDF generated for page {page_num} with track changes.")
-        except Exception as e:
-            print(f"Error generating PDF for page {page_num}: {e}")
-        else:
-            print(f"PDF saved successfully as: {pdf_file}")
-
-# Test the function
-docx_file = "example.docx"
-
-print("Extracting pages with track changes...")
-extract_pages_with_track_changes(docx_file)
-print("Extraction completed.")
+generate_pdf()
