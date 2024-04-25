@@ -1,10 +1,54 @@
+import os
+from docx import Document
+from lxml import etree
 from fpdf import FPDF
 
-def generate_pdf():
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="Hello, World!", ln=True)
-    pdf.output("output.pdf")
+def extract_page_with_track_changes(docx_file, output_folder):
+    # Read the DOCX file
+    doc = Document(docx_file)
 
-generate_pdf()
+    # Convert DOCX to XML
+    xml_content = doc._element.xml
+    xml_root = etree.fromstring(xml_content)
+
+    # Find pages with track changes
+    pages_with_changes = set()
+    for paragraph in xml_root.iter("{*}p"):
+        for revision in paragraph.findall(".//{*}ins"):
+            page_number = revision.get("{*}id")
+            if page_number:
+                pages_with_changes.add(int(page_number))
+
+    # Create a single PDF with the content of the first page with track changes
+    page_num = min(pages_with_changes) if pages_with_changes else None
+    if page_num is not None:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+
+        # Extract content of the page
+        extracted_content = ""
+        for paragraph in xml_root.iter("{*}p"):
+            pg_num = paragraph.find(".//{*}ins[@w:id='{}']".format(page_num))
+            if pg_num is not None:
+                text = "".join([run.text for run in pg_num.findall(".//{*}t")])
+                extracted_content += text + "\n"
+
+        # Add content to PDF
+        pdf.multi_cell(0, 10, extracted_content)
+
+        # Save PDF in the output folder
+        pdf_file = os.path.join(output_folder, f"page_{page_num}_with_changes.pdf")
+        pdf.output(pdf_file)
+        print(f"PDF generated for page {page_num} with track changes.")
+        print(f"PDF saved successfully as: {pdf_file}")
+    else:
+        print("No pages with track changes found.")
+
+# Test the function
+docx_file = "example.docx"
+output_folder = os.path.dirname(docx_file)
+
+print("Extracting page with track changes...")
+extract_page_with_track_changes(docx_file, output_folder)
+print("Extraction completed.")
