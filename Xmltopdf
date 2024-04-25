@@ -42,6 +42,8 @@ def extract_pages_with_track_changes(docx_file, output_folder):
             print(f"PDF generated for page {page_num} with track changes.")
         except Exception as e:
             print(f"Error generating PDF for page {page_num}: {e}")
+        else:
+            print(f"PDF saved successfully as: {pdf_file}")
 
 # Example usage
 docx_file = "example.docx"
