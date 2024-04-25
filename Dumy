@@ -1,16 +1,46 @@
 from docx import Document
+import openpyxl
+from openpyxl.utils import get_column_letter
 
-def count_pages_with_track_changes(docx_file):
-    doc = Document(docx_file)
-    pages_with_changes = set()
+# Function to estimate page number based on text length
+def estimate_page_number(document, text):
+    page_number = 0
+    for paragraph in document.paragraphs:
+        page_number += 1
+        if text in paragraph.text:
+            return page_number
 
-    for paragraph in doc.paragraphs:
-        if paragraph.revisions:
-            page_num = doc.part.body.index(paragraph._element) + 1
-            pages_with_changes.add(page_num)
+# Function to extract track changes
+def extract_track_changes(docx_file):
+    document = Document(docx_file)
+    changes = []
+    for change in document.inline_shapes:
+        if change.type == "TrackChange":
+            if change.text:
+                changes.append((change.text, estimate_page_number(document, change.text)))
+    return changes
 
-    return len(pages_with_changes)
+# Function to save changes to Excel
+def save_to_excel(changes, excel_file):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Text", "Page Number"])
+    for change, page_number in changes:
+        ws.append([change, page_number])
+    for col in range(1, 3):
+        max_length = 0
+        column = get_column_letter(col)
+        for row in ws.iter_rows(min_row=1, max_row=len(changes) + 1, min_col=col, max_col=col):
+            for cell in row:
+                if cell.value:
+                    cell_length = len(str(cell.value))
+                    if cell_length > max_length:
+                        max_length = cell_length
+        ws.column_dimensions[column].width = max_length + 2
+    wb.save(excel_file)
 
-# Replace 'your_docx_file.docx' with the path to your DOCX file
-num_pages_with_changes = count_pages_with_track_changes('your_docx_file.docx')
-print("Number of pages with track changes:", num_pages_with_changes)
+# Example usage
+docx_file = "example.docx"
+excel_file = "track_changes.xlsx"
+changes = extract_track_changes(docx_file)
+save_to_excel(changes, excel_file)
