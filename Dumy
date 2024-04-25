@@ -1,39 +1,17 @@
-from docx import Document
-import openpyxl
-from openpyxl.utils import get_column_letter
+from docx2python import docx2python
 
-def extract_track_changes(docx_file):
-    document = Document(docx_file)
-    changes = []
-    for paragraph in document.paragraphs:
-        original_text = paragraph.text
-        for run in paragraph.runs:
-            run.text = run.text.strip()  # Remove any leading/trailing whitespace
-        modified_text = paragraph.text
-        if original_text != modified_text:
-            changes.append((modified_text, paragraph.paragraph_format.page_number))
-    return changes
-
-def save_to_excel(changes, excel_file):
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.append(["Text", "Page Number"])
-    for change, page_number in changes:
-        ws.append([change, page_number])
-    for col in range(1, 3):
-        max_length = 0
-        column = get_column_letter(col)
-        for row in ws.iter_rows(min_row=1, max_row=len(changes) + 1, min_col=col, max_col=col):
-            for cell in row:
-                if cell.value:
-                    cell_length = len(str(cell.value))
-                    if cell_length > max_length:
-                        max_length = cell_length
-        ws.column_dimensions[column].width = max_length + 2
-    wb.save(excel_file)
+def convert_docx_to_xml_with_revisions(docx_file, xml_file):
+    # Convert docx to python dictionary
+    docx = docx2python(docx_file)
+    
+    # Extract XML representation with revisions
+    xml_with_revisions = docx.xml_with_revisions
+    
+    # Write XML to file
+    with open(xml_file, 'w', encoding='utf-8') as f:
+        f.write(xml_with_revisions)
 
 # Example usage
 docx_file = "example.docx"
-excel_file = "track_changes.xlsx"
-changes = extract_track_changes(docx_file)
-save_to_excel(changes, excel_file)
+xml_file = "document_with_revisions.xml"
+convert_docx_to_xml_with_revisions(docx_file, xml_file)
