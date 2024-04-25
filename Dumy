@@ -2,25 +2,15 @@ from docx import Document
 import openpyxl
 from openpyxl.utils import get_column_letter
 
-# Function to estimate page number based on text length
-def estimate_page_number(document, text):
-    page_number = 0
-    for paragraph in document.paragraphs:
-        page_number += 1
-        if text in paragraph.text:
-            return page_number
-
-# Function to extract track changes
 def extract_track_changes(docx_file):
     document = Document(docx_file)
     changes = []
-    for change in document.inline_shapes:
-        if change.type == "TrackChange":
-            if change.text:
-                changes.append((change.text, estimate_page_number(document, change.text)))
+    for paragraph in document.paragraphs:
+        for run in paragraph.runs:
+            if run.revision:
+                changes.append((run.text, run.paragraphs[0].paragraph_format.page_number))
     return changes
 
-# Function to save changes to Excel
 def save_to_excel(changes, excel_file):
     wb = openpyxl.Workbook()
     ws = wb.active
