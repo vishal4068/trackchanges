@@ -56,3 +56,7 @@ Sub ExtractTrackChangesToPDF()
     MsgBox "Track changes pages extracted to " & pdfFileName, vbInformation
     
 End Sub
+
+regsvr32 "C:\Program Files (x86)\Common Files\Adobe\Acrobat\ActiveX\AcroPDF.dll"
+regsvr32 "C:\Program Files (x86)\Common Files\Adobe\Acrobat\ActiveX\pdfshell.dll"
+
