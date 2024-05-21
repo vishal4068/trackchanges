@@ -1,62 +1,17 @@
-Sub ExtractTrackChangesToPDF()
-    Dim doc As Document
-    Dim rng As Range
-    Dim pageCount As Integer
-    Dim pdfFileName As String
-    
-    ' Set the input Word document
-    Set doc = ActiveDocument
-    
-    ' Initialize the page count
-    pageCount = 0
-    
-    ' Loop through each revision in the document
-    For Each rev In doc.Revisions
-        ' Check if the revision is in a new page
-        If rev.Range.Information(wdActiveEndPageNumber) > pageCount Then
-            pageCount = rev.Range.Information(wdActiveEndPageNumber)
-        End If
-    Next rev
-    
-    ' Initialize PDF output file name
-    pdfFileName = "TrackChangesPages.pdf"
-    
-    ' Initialize PDF object
-    Dim pdfApp As Object
-    Set pdfApp = CreateObject("AcroExch.App")
-    Dim pdfDoc As Object
-    Set pdfDoc = pdfApp.CreateObject("AcroExch.PDDoc")
-    
-    ' Loop through each page
-    For i = 1 To pageCount
-        ' Initialize range for the page
-        Set rng = doc.Range(Start:=doc.GoTo(What:=wdGoToPage, Which:=wdGoToAbsolute, Count:=i).Start, _
-                            End:=doc.GoTo(What:=wdGoToPage, Which:=wdGoToAbsolute, Count:=i + 1).Start)
-        ' Loop through each revision in the page
-        For Each rev In rng.Revisions
-            ' Check if the revision is in track changes
-            If rev.Type = wdRevisionInsert Or rev.Type = wdRevisionDelete Or rev.Type = wdRevisionReplace Then
-                ' Copy the content to the clipboard
-                rev.Range.Copy
-                ' Create a new PDF page
-                pdfDoc.CreatePage
-                ' Paste the content into the PDF page
-                pdfDoc.Pages(pdfDoc.GetNumPages - 1).Content.AddText (rev.Range.Text)
-            End If
-        Next rev
-    Next i
-    
-    ' Save the PDF file
-    pdfDoc.Save pdfFileName
-    pdfDoc.Close
-    pdfApp.Exit
-    Set pdfApp = Nothing
-    
-    ' Notify the user
-    MsgBox "Track changes pages extracted to " & pdfFileName, vbInformation
-    
-End Sub
+from docx import Document
 
-regsvr32 "C:\Program Files (x86)\Common Files\Adobe\Acrobat\ActiveX\AcroPDF.dll"
-regsvr32 "C:\Program Files (x86)\Common Files\Adobe\Acrobat\ActiveX\pdfshell.dll"
+def docx_to_xml_with_track_changes(docx_file, xml_file):
+    # Read the DOCX file with track changes
+    doc = Document(docx_file)
 
+    # Get the XML representation of the document with track changes
+    xml_content = doc._element.xml
+
+    # Write the XML content to a file
+    with open(xml_file, "w", encoding="utf-8") as f:
+        f.write(xml_content)
+
+# Example usage
+docx_file = "example.docx"
+xml_file = "output_with_track_changes.xml"
+docx_to_xml_with_track_changes(docx_file, xml_file)
