@@ -1,36 +1,23 @@
-import docx
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
-from collections import defaultdict
+from docx import Document
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.shared import Pt
 
-def has_tracked_changes(paragraph):
-    # Check for any revisions in the paragraph
-    for run in paragraph.runs:
-        if run._element.xpath('.//w:ins') or run._element.xpath('.//w:del'):
-            return True
-    return False
+def extract_tracked_changes(doc_path):
+    doc = Document(doc_path)
+    tracked_changes = []
 
-def detect_tracked_changes(doc_path):
-    doc = docx.Document(doc_path)
-    changes_by_page = defaultdict(list)
-
-    current_page = 1
     for paragraph in doc.paragraphs:
-        if has_tracked_changes(paragraph):
-            changes_by_page[current_page].append(paragraph.text)
+        for run in paragraph.runs:
+            # Check if the run has tracked changes
+            if run.revision:
+                tracked_changes.append(paragraph.text)
 
-        # Heuristic for page breaks, assuming explicit page breaks
-        if 'Page Break' in paragraph.text:  # Note: This is a simplification
-            current_page += 1
-
-    return changes_by_page
+    return tracked_changes
 
 # Example usage
 doc_path = 'path_to_your_document.docx'
-changes = detect_tracked_changes(doc_path)
+changes = extract_tracked_changes(doc_path)
 
-# Output the results
-for page, changes in changes.items():
-    print(f"Page {page} has changes:")
-    for change in changes:
-        print(change)
+# Output the tracked changes
+for change in changes:
+    print(change)
