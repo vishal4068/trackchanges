@@ -1,17 +1,36 @@
-from docx import Document
+import docx
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+from collections import defaultdict
 
-def docx_to_xml_with_track_changes(docx_file, xml_file):
-    # Read the DOCX file with track changes
-    doc = Document(docx_file)
+def has_tracked_changes(paragraph):
+    # Check for any revisions in the paragraph
+    for run in paragraph.runs:
+        if run._element.xpath('.//w:ins') or run._element.xpath('.//w:del'):
+            return True
+    return False
 
-    # Get the XML representation of the document with track changes
-    xml_content = doc._element.xml
+def detect_tracked_changes(doc_path):
+    doc = docx.Document(doc_path)
+    changes_by_page = defaultdict(list)
 
-    # Write the XML content to a file
-    with open(xml_file, "w", encoding="utf-8") as f:
-        f.write(xml_content)
+    current_page = 1
+    for paragraph in doc.paragraphs:
+        if has_tracked_changes(paragraph):
+            changes_by_page[current_page].append(paragraph.text)
+
+        # Heuristic for page breaks, assuming explicit page breaks
+        if 'Page Break' in paragraph.text:  # Note: This is a simplification
+            current_page += 1
+
+    return changes_by_page
 
 # Example usage
-docx_file = "example.docx"
-xml_file = "output_with_track_changes.xml"
-docx_to_xml_with_track_changes(docx_file, xml_file)
+doc_path = 'path_to_your_document.docx'
+changes = detect_tracked_changes(doc_path)
+
+# Output the results
+for page, changes in changes.items():
+    print(f"Page {page} has changes:")
+    for change in changes:
+        print(change)
